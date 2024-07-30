@@ -1,5 +1,4 @@
 console.log("working...");
-
 // Global Variables
 const menuIterfaceElements = {
   getAllBlogsButton: document.getElementById("getBlogs"),
@@ -24,6 +23,37 @@ class Renderer {
     });
   }
 
+  renderSingleBlog(blog) {
+    screen.innerHTML = "";
+    screen.innerHTML += `
+        <div class="blog-row">
+          <h1>${blog.title}</h1>
+          <p>${blog.content}</p>
+        </div>
+      `;
+  }
+
+  renderNewBlog(blog) {
+    screen.innerHTML = "";
+    screen.innerHTML += `
+        <div class="blog-row">
+          <h1>${blog.title}</h1>
+          <p>${blog.content}</p>
+        </div>
+      `;
+  }
+
+  renderStatusMessage(ok, status, statusText) {
+    screen.innerHTML = "";
+    screen.innerHTML = `
+      <div class="status-message">
+        <h1>Ok: ${ok}</h1>
+        <h2>Status: ${status}</h2>
+        <p>StatusText: ${statusText}</p>
+      </div>
+    `;
+  }
+  
   clearScreen() {
     screen.innerHTML = "";
   }
@@ -67,21 +97,70 @@ class EventListenerManager {
 }
 
 class MenuInterface {
-  createNewBlog() {}
+   createNewBlog() {
+    const id = prompt("Enter the ID of the blog:");
+    const title = prompt("Enter the title of the blog:");
+    const content = prompt("Enter the content of the blog:");
+
+    if (id && title && content) {
+      const newBlog = { id, title, content };
+
+        fetch("http://localhost:3001/api/blogs", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(newBlog)
+        })
+        .then(response => {
+          renderer.renderStatusMessage(response.status, response.statusText);
+          return response.json();
+        })
+        .then(data => {
+          renderer.renderNewBlog(data); 
+        })
+      }
+  }
 
   getAllBlogs() {
     fetch("http://localhost:3001/api/blogs")
       .then((response) => {
+        renderer.renderStatusMessage(response.ok, response.status, response.statusText);
         return response.json();
       })
       .then((data) => {
         renderer.renderAllBlogs(data);
-      });
+      })
   }
 
-  createNewBlog() {}
+  getSingleBlog() {
+    const id = prompt("Enter the ID of the blog to show:");
 
-  deleteBlog() {}
+    if (id) {
+      fetch(`http://localhost:3001/api/blogs/${id}`)
+        .then((response) => {
+          renderer.renderStatusMessage(response.ok, response.status, response.statusText);
+          return response.json();
+      })
+      .then((data) => {
+        renderer.renderSingleBlog(data)
+      })
+    }
+  }
+
+  deleteBlog() {
+    screen.innerHTML = "";
+    const id = prompt("Enter the ID of the blog to delete:");
+    if(id) {
+      fetch(`http://localhost:3001/api/blogs/${id}`, {
+        method: "DELETE"
+      })
+      .then(response => {
+        renderer.renderStatusMessage(response.ok, response.status, response.statusText);
+      })
+      
+    }
+  }
 }
 
 // Initialize
